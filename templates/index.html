@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ghostly Check-In</title>
+    
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <style>
+    .white {
+      color: #eee;
+    }
+    .near-white {
+      color: #777;
+    }
+    .space {
+      height: 20px;
+    }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <script>
+      var lines = []
+      $(document).ready( function() {
+        console.log('test1');
+        var count = 0;
+        var line = [];
+        var startTime = Date.now();
+        var justEnter = false;
+        $( ".target" ).keypress(function( e ) {
+          if (e.which == 13) {
+            $(".output").empty();
+            // var toPrint = lines[Math.floor(Math.random()*lines.length)];
+            console.log(line);
+             $.post('getfeeling?', {body:JSON.stringify(line)}, function(json) {
+              console.log('response', json);
+              // console.log(JSON.parse(json));
+            
+              lines.push(line);
+
+              $('.number').empty().append(lines.length.toString());
+              line = [];
+              count = 0;
+              // if (lines.length > 1) {
+              if (json.length > 1) {
+                var toPrint = json;
+                
+                console.log('toPrint', toPrint);
+                for (var i = 0; i < 5; i++) {
+                  var lastTime = toPrint[toPrint.length-1]['time']
+                  // should be median time difference between all letters...
+                  toPrint.push({'char': '', 'time': lastTime+120})
+                }
+                
+
+                for (var i = 0; i < toPrint.length; i++) {
+                  var c = toPrint[i]['char'];
+                  var t = toPrint[i]['time'];
+                  (function (i) {
+                    setTimeout( function() {
+                      var c = toPrint[i]['char'];
+                      var t = toPrint[i]['time'];
+                      if (i < toPrint.length) {
+                        $(".output").append("<span class='lead "+i.toString()+"'>"+c+"</span>");
+                      }
+                      count++;
+                      if (count > 5) {
+                        $('.'+(count-5).toString()).addClass('near-white');
+                        $('.'+(count-6).toString()).removeClass('near-white').addClass('white');
+                      }
+                    }, t);
+                  })(i);
+                  
+                }
+                count = 0; 
+              }
+            });
+            
+            $(".target").val('');
+            justEnter = true;
+            // $(".answer").empty().append(lines);
+          } else {
+            if (justEnter) {
+              $(".output").empty();
+              justEnter = false;
+              startTime = Date.now();
+            }
+            var c = String.fromCharCode(e.which);
+            line.push({'char':c, 'time': Date.now() - startTime});
+            $(".output").append("<span class='lead "+count.toString()+"'>"+c+"</span>");
+            count++;
+            if (count > 5) {
+              $('.'+(count-5).toString()).addClass('near-white');
+              $('.'+(count-6).toString()).removeClass('near-white').addClass('white');
+            }
+          }
+          
+        });
+      });
+    </script>
+
+
+  </head>
+  <body>
+    <div class="container-fluid">
+
+      <div class="row">
+        <div class="col-md-12">
+          <input type="text" class="target">
+          <div class="jumbotron">
+
+            <div class="row">
+              <div class="col-sm-10">
+
+                <div class="space content">
+                  <span class="lead">how are you feeling?</span>
+                  <span class="output">
+                </div>
+
+              </div>
+              <div class="col-sm-2">
+                <span class="number"></span>
+                <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
+              </div>
+          </div>
+          <div class="space answer content"></div>
+        </div>
+      </div>
+
+      
+    </div>
+  </body>
+</html>
